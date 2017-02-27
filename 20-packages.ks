@@ -100,6 +100,13 @@ shim
 -libselinux-python
 -libselinux
 
+# Fusion IO driver
+iomemory-vsl
+fio-common
+fio-sysvinit
+fio-preinstall
+fio-util
+
 # Things it would be nice to loose
 -fedora-logos
 -fedora-release-notes
