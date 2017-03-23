@@ -6,10 +6,14 @@ Facter.add(:physical) do
 
   setcode do
     physical_hash = Hash.new { |hash, key| hash[key] = Hash.new(&hash.default_proc) }
-    # check if pciutils is installed to make this fact properly return nil on VMs
-    lspci_installed = system("dpkg -l | grep -q pciutils") ? true : false
+    # We know pcitools is installed, as it's rolled into our discovery image
+    # lspci_installed = system("dpkg -l | grep -q pciutils") ? true : false
     lspci_output = Facter::Core::Execution.exec("lspci -nn")
-    return nil unless lspci_output && lspci_installed
+    return nil unless lspci_output
+    # Temporary bumf to match the hardware in Applejack, so we can test
+    if lspci_output.match(/C220/) then
+      physical_hash[:raid][:intel_c220] = true
+    end
     # Intel NVME
     if lspci_output.match(/\[8086:0953/) then
       physical_hash[:nand][:intel_nvme] = true
