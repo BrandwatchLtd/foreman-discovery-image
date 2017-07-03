@@ -108,14 +108,13 @@ fio-preinstall
 fio-util
 
 # HP tools
-hp-health
+#hp-health
 hpssacli
-hp-snmp-agents
+#hp-snmp-agents
 hpssa
-hpssacli
-hp-smh-templates
-hpsmh
-hponcfg
+#hp-smh-templates
+#hpsmh
+#hponcfg
 
 # Things it would be nice to loose
 -fedora-logos
