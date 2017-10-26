@@ -5,11 +5,17 @@
 Facter.add("fdident", :timeout => 10) do
   setcode do
     ident = Facter.fact("serialnumber").value
-    ipmi_serial = Facter.fact("ipmi_fru_product_serial").value
-    board_product = Facter.fact("ipmi_fru_board_product").value
+    if Facter.fact("ipmi_fru_product_serial")
+      ipmi_serial = Facter.fact("ipmi_fru_product_serial").value
+    end
+    if Facter.fact("ipmi_fru_board_product")
+      board_product = Facter.fact("ipmi_fru_board_product").value
+    end
     node = '1'
-    if board_product and match = board_product.match(/(\d+)/)
-      node = match.captures[0].to_s
+    if board_product
+      if match = board_product.match(/(\d+)/)
+        node = match.captures[0].to_s
+      end
     end
     if ipmi_serial and not ipmi_serial.match(/12345678/)
       ident = ipmi_serial
