@@ -129,6 +129,7 @@ mkdir -p /opt/extension/{bin,lib,lib/ruby,facts}
 
 echo " * setting up lldp service"
 systemctl enable lldpad.socket
+systemctl enable lldpd
 cat > /etc/udev/rules.d/82-enable-lldp.rules <<'UDEV'
 ACTION=="add", SUBSYSTEM=="net", NAME!="lo", TAG+="systemd", ENV{SYSTEMD_WANTS}="enable-lldp@%k.service"
 UDEV
