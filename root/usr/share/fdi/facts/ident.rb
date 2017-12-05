@@ -23,7 +23,7 @@ Facter.add("fdident", :timeout => 10) do
       elsif ldap_serial then
         node_serial = ldap_serial
       else
-        node_serial = Facter.value(:macaddress).gsub(/:/,'')
+        node_serial = Facter.value(:discovery_bootif).gsub(/:/,'')
       end
     else
       node_serial = dmi_serial
@@ -48,6 +48,6 @@ Facter.add("fdident", :timeout => 10) do
         end
       end
     end
-    ident = node_serial + "-" + node_number
+    ident = node_serial + "-" + node_number.to_s
   end
 end
