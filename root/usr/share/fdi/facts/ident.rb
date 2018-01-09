@@ -48,6 +48,6 @@ Facter.add("fdident", :timeout => 10) do
         end
       end
     end
-    ident = node_serial + "-" + node_number.to_s
+    ident = node_serial.to_s + "-" + node_number.to_s
   end
 end
