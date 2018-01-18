@@ -1,6 +1,7 @@
 %packages --excludedocs
 bash
 kernel
+kernel-devel
 biosdevname
 grub2
 grub2-tools
