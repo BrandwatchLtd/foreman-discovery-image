@@ -15,6 +15,7 @@ vim-minimal
 acpid
 tftp
 lldpad
+lldpd
 isomd5sum
 
 # Dracut missing deps (https://bugzilla.redhat.com/show_bug.cgi?id=1285810)
