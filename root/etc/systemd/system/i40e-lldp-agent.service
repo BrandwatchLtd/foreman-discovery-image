@@ -1,0 +1,20 @@
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Documentation=man:systemd-sysv-generator(8)
+SourcePath=/usr/bin/i40e-lldp-agent
+Description=LSB: Manage x710 lldp agent
+Before=lldpd.service.target
+Conflicts=lldpd.service.target
+
+[Service]
+Type=forking
+Restart=no
+TimeoutSec=5min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=no
+ExecStart=/usr/bin/i40e-lldp-agent stop
+ExecStop=/usr/bin/i40e-lldp-agent stop

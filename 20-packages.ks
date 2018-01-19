@@ -1,7 +1,6 @@
 %packages --excludedocs
 bash
 kernel
-kernel-devel
 biosdevname
 grub2
 grub2-tools
@@ -17,6 +16,16 @@ tftp
 lldpad
 lldpd
 isomd5sum
+
+# required to build drivers (should it be needed?)
+kernel-devel
+gcc
+cpp
+glibc-devel
+glibc-headers
+kernel-headers
+libmpc
+mpfr
 
 # Dracut missing deps (https://bugzilla.redhat.com/show_bug.cgi?id=1285810)
 tar

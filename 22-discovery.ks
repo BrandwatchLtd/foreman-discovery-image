@@ -39,6 +39,9 @@ systemctl enable foreman-proxy.service
 systemctl enable discovery-fetch-extensions.path
 systemctl enable discovery-menu.service
 
+echo " * disabling the i40e internal lldp service"
+systemctl enable i40e-lldp-agent.service
+
 # register service is started manually from discovery-menu
 systemctl disable discovery-register.service
 

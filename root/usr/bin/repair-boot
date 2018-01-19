@@ -1,0 +1,9 @@
+apt-get install lvm2; vgchange -ay
+mount /dev/main/root /mnt
+mount /dev/sda1 /mnt/boot
+for i in /dev /dev/pts /proc /sys /run; do mount -B $i /mnt$i; done
+chroot /mnt
+
+#grub-install /dev/sda1
+#update-grub
+#grub-probe -t device /boot/grub
