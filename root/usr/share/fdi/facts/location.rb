@@ -10,6 +10,8 @@ Facter.add("foreman_location", :timeout => 10) do
       location = 'Sov House Brighton'
     elsif ip.match(/^10\.1/)
       location = 'Custodian DC Maidstone'
+    elsif ip.match(/^10\.3/)
+      location = 'Virtus DC (Hayes)'
     elsif ip.match(/^10\.0\.13/)
       location = 'Custodian DC Maidstone'
     elsif ip.match(/^10\.0/)
