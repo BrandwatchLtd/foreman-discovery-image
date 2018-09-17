@@ -54,6 +54,7 @@ rubygem-newt
 # Debugging support
 less
 file
+bind-utils
 
 # Only needed because livecd-tools runs /usr/bin/firewall-offline-cmd
 # unconditionally; patch submitted upstream. Remove once released version
