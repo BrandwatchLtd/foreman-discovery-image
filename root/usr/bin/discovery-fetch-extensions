@@ -7,6 +7,10 @@
 
 extdir="/opt/extension"
 
+# add /etc/hosts entry for foreman_server
+sleep 2
+/usr/share/fdi/foreman_server.sh
+
 source /usr/share/fdi/commonfunc.sh
 exportKCL
 
