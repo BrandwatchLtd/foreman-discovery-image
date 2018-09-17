@@ -79,14 +79,13 @@ ensure
   $stderr = previous_stderr
 end
 
+def cmdline_hash
+  $cmdline_hash ||= Hash[cmdline.split.map { |x| x.split('=', 2)}]
+end
+
 def cmdline option=nil, default=nil
-  @cmdline ||= File.open("/proc/cmdline", 'r') { |f| f.read }
-  if option
-    result = @cmdline.split.map { |x| $1 if x.match(/^#{option}=(.*)/)}.compact
-    result.size == 1 ? result.first : default
-  else
-    @cmdline
-  end
+  return File.open("/proc/cmdline", 'r') { |f| f.read } unless option
+  cmdline_hash[option] || default
 end
 
 def detect_first_nic_with_link
@@ -126,7 +125,13 @@ end
 
 # SRV discovery will work only if DHCP returns valid search domain
 def discover_by_dns_srv
-  resolver = Resolv::DNS.new
+  default = Resolv::DNS::Config.default_config_hash
+  conf = {
+    :nameserver => cmdline("fdi.dns_nameserver", default[:nameserver]),
+    :search => cmdline("fdi.dns_search", default[:search]),
+    :ndots => cmdline("fdi.dns_ndots", default[:ndots]).to_i,
+  }
+  resolver = Resolv::DNS.new(conf)
   type = Resolv::DNS::Resource::IN::SRV
   result = resolver.getresources("_x-foreman._tcp", type).first
   hostname = result.target.to_s
@@ -220,11 +225,13 @@ def env_append(env,string)
 end
 
 def get_mac(interface = 'primary')
-  `nmcli -t -f 802-3-ethernet.mac-address con show #{interface} 2>/dev/null`.scan(/\w{2}:\w{2}:\w{2}:\w{2}:\w{2}:\w{2}\n/).first.strip rescue 'N/A'
+  wait = cmdline('fdi.nmwait', 120)
+  `nmcli -w #{wait} -t -f 802-3-ethernet.mac-address con show #{interface} 2>/dev/null`.scan(/\w{2}:\w{2}:\w{2}:\w{2}:\w{2}:\w{2}\n/).first.strip rescue 'N/A'
 end
 
 def get_ipv4(interface = 'primary')
-  `nmcli -t -f IP4.ADDRESS con show #{interface} 2>/dev/null`.scan(/\d+\.\d+\.\d+\.\d+\/\d+\n/).first.strip rescue 'N/A'
+  wait = cmdline('fdi.nmwait', 120)
+  `nmcli -w #{wait} -t -f IP4.ADDRESS con show #{interface} 2>/dev/null`.scan(/\d+\.\d+\.\d+\.\d+\/\d+\n/).first.strip rescue 'N/A'
 end
 
 def detect_ipv4_credentials(interface)

@@ -13,10 +13,10 @@ systemctl disable kdump.service
 echo " * configuring NetworkManager and udev/nm-prepare"
 cat > /etc/NetworkManager/NetworkManager.conf <<'NM'
 [main]
-monitor-connection-files=yes
+monitor-connection-files=no
 no-auto-default=*
-#[logging]
-#level=DEBUG
+[logging]
+level=DEBUG
 NM
 cat > /etc/udev/rules.d/81-nm-prepare.rules <<'UDEV'
 ACTION=="add", SUBSYSTEM=="net", NAME!="lo", RUN+="/usr/bin/systemd-cat -t nm-prepare /usr/bin/nm-prepare %k"
@@ -37,10 +37,10 @@ echo " * enabling required system services"
 systemctl enable ipmi.service
 systemctl enable foreman-proxy.service
 systemctl enable discovery-fetch-extensions.path
+systemctl enable discovery-start-extensions.service
 systemctl enable discovery-menu.service
-
-echo " * disabling the i40e internal lldp service"
-systemctl enable i40e-lldp-agent.service
+systemctl enable discovery-script-pxe.service
+systemctl enable discovery-script-pxeless.service
 
 # register service is started manually from discovery-menu
 systemctl disable discovery-register.service
@@ -58,6 +58,7 @@ sed -i '/\[Unit\]/a ConditionPathExists=/etc/NetworkManager/system-connections/p
 sed -i '/\[Service\]/a EnvironmentFile=-/etc/default/discovery' /usr/lib/systemd/system/foreman-proxy.service
 sed -i '/\[Service\]/a ExecStartPre=/usr/bin/generate-proxy-cert' /usr/lib/systemd/system/foreman-proxy.service
 sed -i '/\[Service\]/a PermissionsStartOnly=true' /usr/lib/systemd/system/foreman-proxy.service
+sed -i '/\[Service\]/a TimeoutStartSec=9999' /usr/lib/systemd/system/foreman-proxy.service
 /sbin/usermod -a -G tty foreman-proxy
 
 cat >/etc/foreman-proxy/settings.yml <<'CFG'
@@ -107,7 +108,7 @@ echo " * setting up journald and ttys"
 systemctl disable getty@tty1.service getty@tty2.service
 systemctl mask getty@tty1.service getty@tty2.service
 echo "Storage=volatile" >> /etc/systemd/journald.conf
-echo "RuntimeMaxUse=15M" >> /etc/systemd/journald.conf
+echo "RuntimeMaxUse=25M" >> /etc/systemd/journald.conf
 echo "ForwardToSyslog=no" >> /etc/systemd/journald.conf
 echo "ForwardToConsole=no" >> /etc/systemd/journald.conf
 systemctl enable journalctl.service
@@ -132,9 +133,13 @@ mkdir -p /opt/extension/{bin,lib,lib/ruby,facts}
 
 echo " * setting up lldp service"
 systemctl enable lldpad.socket
-systemctl enable lldpd
 cat > /etc/udev/rules.d/82-enable-lldp.rules <<'UDEV'
 ACTION=="add", SUBSYSTEM=="net", NAME!="lo", TAG+="systemd", ENV{SYSTEMD_WANTS}="enable-lldp@%k.service"
 UDEV
+
+echo " * inserting missing initramdisk drivers"
+kversion=$(rpm -q kernel --qf '%{version}-%{release}.%{arch}\n')
+ramfsfile="/boot/initramfs-$kversion.img"
+/sbin/dracut --force --add-drivers "mptbase mptscsih mptspi hv_storvsc hid_hyperv hv_netvsc hv_vmbus" $ramfsfile $kversion
 
 %end

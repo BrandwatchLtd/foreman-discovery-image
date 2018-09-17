@@ -18,18 +18,9 @@
 # MA  02110-1301, USA.  A copy of the GNU General Public License is
 # also available at http://www.gnu.org/copyleft/gpl.html.
 
+require 'resolv'
 require 'facter/util/ip'
 require '/usr/lib64/ruby/vendor_ruby/discovery.rb'
-
-def cmdline option=nil, default=nil
-  line = File.open("/proc/cmdline", 'r') { |f| f.read }
-  if option
-    result = line.split.map { |x| $1 if x.match(/^#{option}=(.*)/)}.compact
-    result.size == 1 ? result.first : default
-  else
-    line
-  end
-end
 
 def discovery_bootif
   # PXELinux dash-separated hexadecimal *without* the leading hardware type
@@ -63,6 +54,21 @@ Facter.add("discovery_bootip", :timeout => 10) do
       result = Facter::Util::IP.get_interface_value(iface, "ipaddress") if mac == required
     end
     result
+  end
+end
+
+(1..99).each do |n|
+  if (fact_name = cmdline("fdi.pxfactname#{n}"))
+    fact_value = cmdline("fdi.pxfactvalue#{n}")
+    Facter.add(fact_name) do
+      setcode do
+        fact_value
+      end
+    end
+    Facter.debug "Adding kernel command line custom fact #{fact_name}=#{fact_value}"
+  else
+    Facter.debug "Processed #{n} kernel command line custom facts, we are done here"
+    break
   end
 end
 
@@ -140,6 +146,7 @@ if has_ipmi
         attributes[:ipaddress_source] = $1
       when /^IP Address\s+: (.*)/
         attributes[:ipaddress] = $1
+        attributes[:ptr] = (Resolv.new.getname($1) rescue nil)
       when /^Subnet Mask\s+: (.*)/
         attributes[:subnet_mask] = $1
       when /^MAC Address\s+: (.*)/
@@ -158,6 +165,59 @@ if has_ipmi
     end
     attributes.each do |fact, value|
       add_ipmi_facts fact, value, n
+    end
+  end
+end
+
+# NetworkManager details (e.g. nmprimary_dhcp4_option_domain_name)
+wait = cmdline('fdi.nmwait', 120)
+nmout = Facter::Util::Resolution.exec("nmcli -w #{wait} -t con show primary 2>/dev/null")
+nmout.each_line do |x|
+  elements = x.split(":", 2)
+  name = elements.first.downcase.sub(/\[\d+\]$/,"")
+  if name =~ /dhcp.\.option/
+    dhcp_elems = elements.last.split(/\s*=\s*/, 2)
+    name += '_' + dhcp_elems.first
+    value = dhcp_elems.last
+  else
+    value = elements.last
+  end
+  name = "nmprimary_" + name.tr('.', '_')
+  Facter.add(name) do
+    setcode do
+      value.chomp
+    end
+  end
+end
+
+# Create DHCP FQDN helper facts
+Facter.add("nmprimary_dhcp4_option_fqdn") do
+  setcode do
+    if Facter.value("nmprimary_dhcp4_option_host_name") && Facter.value("nmprimary_dhcp4_option_domain_name")
+      Facter.value("nmprimary_dhcp4_option_host_name") + '.' + Facter.value("nmprimary_dhcp4_option_domain_name")
+    else
+      nil
+    end
+  end
+end
+
+# Primary interface IP PTR DNS record
+Facter.add("nmprimary_ptr") do
+  setcode do
+    ip = Facter.value("nmprimary_ip4_address").scan(/\d+\.\d+\.\d+\.\d+/).first.strip rescue nil
+    if ip.nil?
+      nil
+    else
+      Resolv.new.getname(ip) rescue nil
+    end
+  end
+end
+
+# Keep this as the last one - overrides from file system
+Dir.glob('/tmp/facts/*') do |file|
+  Facter.add(File.basename(file)) do
+    setcode do
+      File.open(file) {|f| f.readline.chomp}
     end
   end
 end

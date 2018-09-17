@@ -81,11 +81,21 @@ http://theforeman.org/plugins/foreman_discovery/
 Building
 --------
 
+A host with either Fedora or CentOS 7 is required. RHEL 7 cannot be used as
+it is missing core dependency (livecd-tools), but this can be workarounded
+by installing it from CentOS 7 repositories (and two dependencies). Grub2
+EFI and Shim packages are only required if the resulting ISO must boot on
+UEFI systems.
+
 Install the required packages:
 
 ```
-$ sudo yum install livecd-tools pykickstart isomd5sum
+$ sudo yum install livecd-tools pykickstart isomd5sum syslinux \
+  grub2-efi shim grub2-efi-x64 grub2-efi-x64-cdboot shim-x64
 ```
+
+On older versions of Fedora or RHEL 7.0-7.3 shim and grub packages has no
+x64 suffix, the command above will install one of the two.
 
 To prepare CentOS 7 kickstart do:
 
@@ -99,7 +109,7 @@ To prepare Fedora 19 kickstart do:
 $ ./build-livecd fdi-fedora19.ks
 ```
 
-To build the image (make sure you have at least 1 GB free space in /tmp):
+To build the image (make sure you have at least 3 GB free space in /tmp):
 
 ```
 $ sudo ./build-livecd-root
@@ -131,36 +141,21 @@ Building a release
 This chapter is for The Foreman team members, skip to the next section if
 this is not for you.
 
-To build new release, use Jenkins CI job:
+To build new release, use our Jenkins CI job:
 
-http://ci.theforeman.org/view/Packaging/job/packaging_discovery_image
+http://ci.theforeman.org/job/foreman-discovery-image-publish/
 
-To initiate the build in Rackspace locally, you need to install Vagrant,
-then install vagrant rackspace plugin via `vagrant plugin install
-vagrant-rackspace" and then configure it:
+The job uses Vagrant to spin VM in OpenStack/Rackspace and then copies
+the result to our downloads.theforeman.org site.
 
-		$ cat ~/.vagrant.d/Vagrantfile
-		# vim: sw=2:ts=2:et
-
-		Vagrant.configure("2") do |config|
-		  config.vm.box = "dummy"
-		  config.ssh.private_key_path = "~/.ssh/id_rsa"
-
-		  config.vm.provider :rackspace do |rs|
-			rs.username = "username"
-			rs.api_key = "abcdef1234567890..."
-			rs.public_key_path = "~/.ssh/id_rsa.pub"
-		  end
-		end
-
-Starting the job is easy:
+It is possible to start the job locally in libvirt:
 
 		cd aux/vagrant-build
 		distro=f24
-		LC_ALL=C repoowner=theforeman branch=master proxy_repo=1.14 vagrant up $distro
+		LC_ALL=C repoowner=theforeman branch=master proxy_repo=1.18 vagrant up $distro
 
-Wait until the box starts up in Rackspace and builds the image, then connect to
-the box and download the image:
+Wait until the box starts up and builds the image, then connect to the box
+and download the image:
 
 		vagrant ssh-config $distro | tee vagrant-ssh-config.tmp
 		mkdir tmp
@@ -169,7 +164,22 @@ the box and download the image:
 
 And finally (do not forget):
 
-		LC_ALL=C repoowner=theforeman branch=master proxy_repo=1.14 vagrant destroy $distro
+		LC_ALL=C repoowner=theforeman branch=master proxy_repo=1.18 vagrant destroy $distro
+
+Extensions
+----------
+
+Discovery Image supports runtime extensions published via TFTP or HTTP.
+Those are distributed as ZIP files with shell scripts. It is also possible
+to build an image with extensions built-in which is helpful for PXE-less
+environments.
+
+To do that, [follow the
+documentation](https://theforeman.org/plugins/foreman_discovery/8.0/index.html#5.Extendingtheimage)
+to create directory structure in root/opt/extension folder. Do not put ZIP
+files into this folder, but keep the directory structure extracted (this is
+the directory where ZIP files get downloaded and extracted). Then rebuild
+the image, the extensions will be started during boot.
 
 Additional facts
 ----------------
@@ -210,7 +220,7 @@ fdi.ssh=1 fdi.rootpw=redhat
 ```
 
 Root password can also be specified in encrypted form (using 'redhat' as
-an example below). Single and/or double quotes around password are 
+an example below). Single and/or double quotes around password are
 recommended to be used to prevent possible special characters
 interpretation.
 

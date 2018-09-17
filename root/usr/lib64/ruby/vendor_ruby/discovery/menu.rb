@@ -76,19 +76,18 @@ def start_discovery_service
 end
 
 def configure_network static, mac, ip=nil, gw=nil, dns=nil, vlan=nil
-  command("systemctl stop foreman-proxy")
+  command("systemctl stop foreman-proxy", false)
   if static
     command("nm-configure primary-static '#{mac}' '#{ip}' '#{gw}' '#{dns}' '#{vlan}'")
   else
     command("nm-configure primary '#{mac}' '#{vlan}'")
   end
-  command("nmcli connection reload")
-  command("nmcli connection down primary", false)
-  result = command("nmcli connection up primary", false)
-  command("nm-online -s -q --timeout=45") unless static
-  # restarting proxy with regenerated SSL self-signed cert
-  command("systemctl start foreman-proxy") if result
-  result
+  wait = cmdline('fdi.nmwait', 120)
+  command("nmcli -w #{wait} connection reload", false)
+  up_result = command("nmcli -w #{wait} connection up primary", false)
+  command("nm-online -s -q --timeout=#{wait}")
+  # wait for IPv4, generate SSL self-signed cert and start proxy
+  command("systemctl start foreman-proxy") && up_result
 end
 
 def perform_upload proxy_url, proxy_type, custom_facts
@@ -117,6 +116,7 @@ end
 
 def cleanup
   Newt::Screen.finish
+  exit 0
 end
 
 log_msg "Kernel opts: #{cmdline}"
@@ -144,7 +144,14 @@ def main_loop
   end
 
   Newt::Screen.new
-  Newt::Screen.push_helpline(_("Foreman Discovery Image") + " v#{fdi_version} (#{fdi_release})")
+  mode = if File.exists?("/sys/firmware/efi/")
+           "UEFI"
+         else
+           "BIOS"
+         end
+  driver = `cat /proc/fb`.strip.tr("\n", ' ')
+  driver = "NO-FB" if driver.empty?
+  Newt::Screen.push_helpline(_("Foreman Discovery Image") + " v#{fdi_version} (#{fdi_release}) #{RUBY_PLATFORM} #{mode} #{driver}")
 
   if cmdline('BOOTIF')
     # Booted via PXE
@@ -172,17 +179,10 @@ def main_loop
           status = configure_network false, mac
         end
         log_debug "Unattended network configuration finished, result: #{status}"
+        delay = cmdline('fdi.countdown', 10)
+        log_debug "Delay for network initialization: #{delay} seconds"
+        sleep delay
         facts = new_custom_facts(mac)
-        (1..99).each do |n|
-          if (fact_name = cmdline("fdi.pxfactname#{n}"))
-            fact_value = cmdline("fdi.pxfactvalue#{n}")
-            log_debug "Adding custom fact #{fact_name}=#{fact_value}"
-            facts[fact_name] = fact_value
-          else
-            log_debug "Fact named fdi.pxfactname#{n} not present, so this was the last one"
-            break
-          end
-        end
         log_debug "Unattended facts upload started"
         result = upload(proxy_url, proxy_type, facts)
         log_debug "Unattended facts upload finished, result: #{result}"
