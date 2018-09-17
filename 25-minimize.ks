@@ -80,6 +80,7 @@ rpm -qa --queryformat '%{SIZE} %{NAME}%{VERSION}%{RELEASE}\n' | sort -n -r > /us
 echo " * cleaning up yum cache and removing rpm database"
 yum clean all
 rm -rf /var/lib/{yum,rpm}/*
+rm -rf /var/cache/yum
 # fix the vim syntax markup */
 
 # no more python loading after this step

@@ -6,3 +6,4 @@ repo --name=foreman-plugins-el7 --baseurl=http://yum.theforeman.org/plugins/nigh
 repo --name=fusion-io --baseurl=file:///root/git/foreman-discovery-image/rpms/
 repo --name=hp-spp --baseurl=http://downloads.linux.hpe.com/SDR/repo/spp/RHEL/7.2/x86_64/current/
 repo --name=hp-mcp --baseurl=http://downloads.linux.hpe.com/SDR/repo/mcp/centos/7.2/x86_64/current/
+repo --name=gf --baseurl=http://mirror.ghettoforge.org/distributions/gf/el/7/gf/x86_64/
