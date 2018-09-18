@@ -13,7 +13,7 @@ yum
 vim-minimal
 acpid
 tftp
-lldpad
+#lldpad
 lldpd
 isomd5sum
 

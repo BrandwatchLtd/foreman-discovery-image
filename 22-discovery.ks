@@ -39,6 +39,8 @@ systemctl enable foreman-proxy.service
 systemctl enable discovery-fetch-extensions.path
 systemctl enable discovery-start-extensions.service
 systemctl enable discovery-menu.service
+echo " * disabling the i40e internal lldp service"
+systemctl enable i40e-lldp-agent.service
 systemctl enable discovery-script-pxe.service
 systemctl enable discovery-script-pxeless.service
 
@@ -133,6 +135,7 @@ mkdir -p /opt/extension/{bin,lib,lib/ruby,facts}
 
 echo " * setting up lldp service"
 systemctl enable lldpad.socket
+systemctl enable lldpd
 cat > /etc/udev/rules.d/82-enable-lldp.rules <<'UDEV'
 ACTION=="add", SUBSYSTEM=="net", NAME!="lo", TAG+="systemd", ENV{SYSTEMD_WANTS}="enable-lldp@%k.service"
 UDEV
