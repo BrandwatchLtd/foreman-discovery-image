@@ -16,6 +16,7 @@ tftp
 #lldpad
 lldpd
 isomd5sum
+parted
 
 # required to build drivers (should it be needed?)
 kernel-devel
@@ -94,11 +95,12 @@ shim
 -usermode
 
 # file system stuff
--dmraid
--mdadm
--lvm2
--e2fsprogs
--e2fsprogs-libs
+dmraid
+mdadm
+lvm2
+xfsprogs
+e2fsprogs
+e2fsprogs-libs
 
 # grub
 -freetype
