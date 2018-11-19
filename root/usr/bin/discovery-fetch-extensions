@@ -17,7 +17,7 @@ exportKCL
 for zip in ${KCL_FDI_ZIPS//,/ }
 do
   tempfile="$(mktemp)"
-  URL="http://${ZIP_SERVER}/${zip}"
+  URL="${ZIP_SERVER}/${zip}"
   echo "Downloading $URL"
   curl --fail --silent "$URL" -o "${tempfile}"
   curl_rc="$?"
@@ -28,5 +28,6 @@ do
   else
     unzip "${tempfile}" -d "${extdir}"
   fi
+  chmod +x ${extdir}/autostart.d/*.sh
   rm "${tempfile}"
 done
