@@ -6,16 +6,16 @@ location = 'unknown'
 ip = Facter.value(:discovery_bootip)
 if ip.match(/^10\.2/)
   location = 'Sov House Brighton'
-  foreman_server = 'theforeman.int.brandwatch.net'
+  foreman_server = 'theforeman-btn1.brandwatch.net'
+elsif ip.match(/^10\.1\.89/)
+  location = 'Custodian DC Maidstone'
+  foreman_server = 'theforeman-mad1.brandwatch.net'
 elsif ip.match(/^10\.1/)
   location = 'Custodian DC Maidstone'
-  foreman_server = 'theforeman.dr.brandwatch.net'
+  foreman_server = 'theforeman-mad0.brandwatch.net'
 elsif ip.match(/^10\.3/)
   location = 'Virtus DC (Hayes)'
   foreman_server = 'theforeman-hay0.brandwatch.net'
-elsif ip.match(/^10\.0\.13/)
-  location = 'Custodian DC Maidstone'
-  foreman_server = 'theforeman.stage.brandwatch.net'
 elsif ip.match(/^10\.0/)
   location = '4d DC Byfleet'
   foreman_server = 'theforeman.live.brandwatch.net'
