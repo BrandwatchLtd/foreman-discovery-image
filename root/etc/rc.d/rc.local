@@ -3,10 +3,6 @@
 source /usr/share/fdi/commonfunc.sh
 exportKCL
 
-# add /etc/hosts entry for foreman_server
-sleep 2
-/usr/share/fdi/foreman_server.sh
-
 # setup root password
 if [[ ! -z "$KCL_FDI_ROOTPW" ]]; then
   # remove possible double and/or single quotes surrounding password string
